@@ -68,10 +68,12 @@ body {
   line-height: 1.6;
   min-height: 100vh;
   transition: background var(--transition), color var(--transition);
+  overscroll-behavior-y: contain;
+  -webkit-text-size-adjust: 100%;
 }
 
-button { font-family: inherit; cursor: pointer; border: none; background: none; }
-input, textarea { font-family: inherit; }
+button { font-family: inherit; cursor: pointer; border: none; background: none; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+input, textarea { font-family: inherit; touch-action: manipulation; }
 a { color: inherit; text-decoration: none; }
 
 /* ==========================================
@@ -97,7 +99,7 @@ a { color: inherit; text-decoration: none; }
 .app-header__inner {
   max-width: 960px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 max(20px, env(safe-area-inset-right)) 0 max(20px, env(safe-area-inset-left));
   height: 100%;
   display: flex;
   align-items: center;
@@ -177,7 +179,7 @@ a { color: inherit; text-decoration: none; }
   max-width: 960px;
   margin: 0 auto;
   width: 100%;
-  padding: 24px 16px;
+  padding: 24px 16px max(24px, env(safe-area-inset-bottom));
 }
 
 /* ==========================================
@@ -938,6 +940,11 @@ a { color: inherit; text-decoration: none; }
 /* ==========================================
    RESPONSIVE - MOBILE
    ========================================== */
+@keyframes slideUpMobile {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
 @media (max-width: 480px) {
   :root {
     --header-h: 60px;
@@ -947,7 +954,17 @@ a { color: inherit; text-decoration: none; }
   .app-header__title { font-size: 0.95rem; }
   .app-header__logo { font-size: 1.6rem; }
 
-  .app-main { padding: 12px 10px; }
+  .app-main { padding: 12px 10px max(16px, env(safe-area-inset-bottom)); }
+
+  /* Calendar */
+  .calendar-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .calendar-nav { justify-content: center; }
+  .calendar-controls { justify-content: center; }
+  .calendar-title { min-width: unset; }
 
   .cal-cell { padding: 4px 2px 2px; border-radius: 7px; }
   .cal-cell__day { font-size: 0.7rem; }
@@ -964,15 +981,42 @@ a { color: inherit; text-decoration: none; }
   .btn--sm { padding: 5px 8px; font-size: 0.75rem; }
   .view-toggle__btn { padding: 4px 10px; font-size: 0.75rem; }
 
+  /* Goals */
   .goal-card__body { padding: 14px; }
   .goal-card__stats { flex-wrap: wrap; gap: 6px; }
   .stat-item { flex: 1; min-width: 70px; }
 
+  /* Stats */
   .stat-cards { grid-template-columns: repeat(2, 1fr); gap: 8px; }
   .stat-card { padding: 14px 10px; }
   .stat-card__value { font-size: 1.3rem; }
 
-  .modal { padding: 20px; }
+  /* Modal → Bottom sheet */
+  .modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .modal {
+    border-radius: 20px 20px 0 0;
+    max-width: 100%;
+    max-height: 92vh;
+    padding: 20px 20px max(20px, env(safe-area-inset-bottom));
+    animation: slideUpMobile 0.3s ease;
+  }
+  /* Bottom sheet handle */
+  .modal::before {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 0 auto 16px;
+  }
+
+  /* Prevent iOS input zoom (font-size < 16px triggers zoom) */
+  .form-input { font-size: 1rem; }
+
   .cat-picker { grid-template-columns: repeat(4, 1fr); }
 
   .feedback-banner { padding: 12px 14px; }
@@ -980,4 +1024,9 @@ a { color: inherit; text-decoration: none; }
   .feedback-banner__rate { font-size: 1.4rem; }
 
   .streak-bar__flame { font-size: 0.75rem; }
+
+  /* Larger touch targets for day goal items */
+  .day-goal-item { padding: 14px 16px; min-height: 52px; }
+  .icon-btn { width: 40px; height: 40px; }
+  .icon-btn--sm { width: 36px; height: 36px; }
 }

@@ -13,6 +13,7 @@ import {
   Filler,
 } from 'chart.js'
 import { Bar, Doughnut, Line } from 'react-chartjs-2'
+import ChartDataLabels from 'chartjs-plugin-datalabels'
 import { MONTHS, CATEGORY_MAP, getFeedback, getGoalTarget, formatGoalSchedule } from '../utils/constants'
 import { getMonthCompletions, isGoalCompletedOnDate } from '../utils/storage'
 
@@ -148,11 +149,15 @@ export default function Statistics({ goals, completions, currentDate }) {
     ],
   }
 
+  const doughnutTotal = catKeys.reduce((s, k) => s + catStats[k].completed, 0)
+
   const chartDefaults = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: { legend: { display: false } },
   }
+
+  const GRID_COLOR = 'rgba(180, 185, 200, 0.25)'
 
   const barOptions = {
     ...chartDefaults,
@@ -161,11 +166,13 @@ export default function Statistics({ goals, completions, currentDate }) {
         beginAtZero: true,
         max: 100,
         ticks: { callback: (v) => `${v}%`, color: 'var(--text-secondary)', font: { size: 11 } },
-        grid: { color: 'var(--border)' },
+        grid: { color: GRID_COLOR },
+        border: { color: GRID_COLOR },
       },
       x: {
         ticks: { color: 'var(--text-secondary)', font: { size: 11 } },
         grid: { display: false },
+        border: { color: GRID_COLOR },
       },
     },
     plugins: {
@@ -186,15 +193,13 @@ export default function Statistics({ goals, completions, currentDate }) {
         beginAtZero: true,
         max: 100,
         ticks: { callback: (v) => `${v}%`, color: 'var(--text-secondary)', font: { size: 11 } },
-        grid: { color: 'var(--border)' },
+        grid: { color: GRID_COLOR },
+        border: { color: GRID_COLOR },
       },
       x: {
-        ticks: {
-          color: 'var(--text-secondary)',
-          font: { size: 10 },
-          maxTicksLimit: 10,
-        },
+        ticks: { color: 'var(--text-secondary)', font: { size: 10 }, maxTicksLimit: 10 },
         grid: { display: false },
+        border: { color: GRID_COLOR },
       },
     },
     plugins: {
@@ -211,6 +216,23 @@ export default function Statistics({ goals, completions, currentDate }) {
         display: true,
         position: 'bottom',
         labels: { color: 'var(--text-secondary)', padding: 12, font: { size: 12 } },
+      },
+      tooltip: {
+        callbacks: {
+          label: (ctx) => {
+            const pct = doughnutTotal > 0 ? Math.round((ctx.raw / doughnutTotal) * 100) : 0
+            return ` ${ctx.raw}회 (${pct}%)`
+          },
+        },
+      },
+      datalabels: {
+        display: (ctx) => ctx.dataset.data[ctx.dataIndex] > 0,
+        color: '#fff',
+        font: { size: 11, weight: '700' },
+        formatter: (value) => {
+          const pct = doughnutTotal > 0 ? Math.round((value / doughnutTotal) * 100) : 0
+          return `${pct}%`
+        },
       },
     },
     cutout: '65%',
@@ -260,33 +282,6 @@ export default function Statistics({ goals, completions, currentDate }) {
         ))}
       </div>
 
-      <div className="charts-grid">
-        {goals.length > 0 && (
-          <div className="chart-card chart-card--wide fade-in">
-            <h3 className="chart-card__title">📈 일별 달성률 추이</h3>
-            <div className="chart-container">
-              <Line data={lineData} options={lineOptions} />
-            </div>
-          </div>
-        )}
-
-        <div className="chart-card fade-in" style={{ '--fade-delay': '60ms' }}>
-          <h3 className="chart-card__title">🎯 목표별 달성률</h3>
-          <div className="chart-container">
-            <Bar data={barData} options={barOptions} />
-          </div>
-        </div>
-
-        {catKeys.length > 0 && (
-          <div className="chart-card fade-in" style={{ '--fade-delay': '120ms' }}>
-            <h3 className="chart-card__title">🗂️ 카테고리별 완료 수</h3>
-            <div className="chart-container chart-container--doughnut">
-              <Doughnut data={doughnutData} options={doughnutOptions} />
-            </div>
-          </div>
-        )}
-      </div>
-
       <div className="goal-stat-list fade-in" style={{ '--fade-delay': '80ms' }}>
         <h3>목표별 상세 통계</h3>
         {goalRates.map(({ goal, completed, target, rate }) => {
@@ -317,6 +312,33 @@ export default function Statistics({ goals, completions, currentDate }) {
             </div>
           )
         })}
+      </div>
+
+      <div className="charts-grid">
+        {goals.length > 0 && (
+          <div className="chart-card chart-card--wide fade-in">
+            <h3 className="chart-card__title">📈 일별 달성률 추이</h3>
+            <div className="chart-container">
+              <Line data={lineData} options={lineOptions} />
+            </div>
+          </div>
+        )}
+
+        <div className="chart-card fade-in" style={{ '--fade-delay': '60ms' }}>
+          <h3 className="chart-card__title">🎯 목표별 달성률</h3>
+          <div className="chart-container">
+            <Bar data={barData} options={barOptions} />
+          </div>
+        </div>
+
+        {catKeys.length > 0 && (
+          <div className="chart-card fade-in" style={{ '--fade-delay': '120ms' }}>
+            <h3 className="chart-card__title">🗂️ 카테고리별 완료 수</h3>
+            <div className="chart-container chart-container--doughnut">
+              <Doughnut data={doughnutData} options={doughnutOptions} plugins={[ChartDataLabels]} />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

@@ -22,16 +22,6 @@ ChartJS.register(
   PointElement, Title, Tooltip, Legend, Filler
 )
 
-function StatCard({ label, value, sub, color }) {
-  return (
-    <div className="stat-card" style={{ '--accent': color }}>
-      <div className="stat-card__value" style={{ color }}>{value}</div>
-      <div className="stat-card__label">{label}</div>
-      {sub && <div className="stat-card__sub">{sub}</div>}
-    </div>
-  )
-}
-
 export default function Statistics({ goals, completions, currentDate }) {
   const year = currentDate.getFullYear()
   const month = currentDate.getMonth()
@@ -58,16 +48,6 @@ export default function Statistics({ goals, completions, currentDate }) {
   const overallRate = useMemo(() => {
     if (goalRates.length === 0) return 0
     return Math.round(goalRates.reduce((sum, r) => sum + r.rate, 0) / goalRates.length)
-  }, [goalRates])
-
-  const totalCompletions = useMemo(
-    () => goals.reduce((sum, g) => sum + (monthStats[g.id]?.completed || 0), 0),
-    [goals, monthStats]
-  )
-
-  const bestGoal = useMemo(() => {
-    if (goalRates.length === 0) return null
-    return goalRates.reduce((best, r) => r.rate > best.rate ? r : best, goalRates[0])
   }, [goalRates])
 
   // Daily completion data for line chart (what % of goals were checked today)

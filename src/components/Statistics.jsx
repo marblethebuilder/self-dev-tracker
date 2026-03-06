@@ -312,7 +312,7 @@ export default function Statistics({ goals, completions, currentDate }) {
               </div>
               <div className="goal-stat-item__meta">
                 <span>{completed}회 완료 / 목표 {target}회</span>
-                <span style={{ color: fb.color }}>{fb.message.split(' ').slice(0, 2).join(' ')}</span>
+                <span style={{ color: fb.color }}>{fb.message}</span>
               </div>
             </div>
           )

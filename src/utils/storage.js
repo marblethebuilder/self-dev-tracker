@@ -1,32 +1,60 @@
 const KEYS = {
-  GOALS: 'sdt_goals',
-  COMPLETIONS: 'sdt_completions',
-  THEME: 'sdt_theme',
+  GOALS: (id) => `sdt_goals_${id}`,
+  COMPLETIONS: (id) => `sdt_completions_${id}`,
+  THEME: (id) => `sdt_theme_${id}`,
+  ACCOUNTS: 'sdt_accounts',
+  CURRENT: 'sdt_current',
 }
 
-export const storage = {
-  getGoals: () => {
+export const accountStorage = {
+  getAccounts: () => {
     try {
-      return JSON.parse(localStorage.getItem(KEYS.GOALS)) || []
+      return JSON.parse(localStorage.getItem(KEYS.ACCOUNTS)) || []
     } catch {
       return []
     }
   },
-  saveGoals: (goals) => {
-    localStorage.setItem(KEYS.GOALS, JSON.stringify(goals))
+  saveAccounts: (accounts) => {
+    localStorage.setItem(KEYS.ACCOUNTS, JSON.stringify(accounts))
   },
-  getCompletions: () => {
+  getCurrent: () => localStorage.getItem(KEYS.CURRENT) || null,
+  setCurrent: (id) => {
+    if (id) localStorage.setItem(KEYS.CURRENT, id)
+    else localStorage.removeItem(KEYS.CURRENT)
+  },
+  deleteAccount: (id) => {
+    localStorage.removeItem(KEYS.GOALS(id))
+    localStorage.removeItem(KEYS.COMPLETIONS(id))
+    localStorage.removeItem(KEYS.THEME(id))
+    const accounts = accountStorage.getAccounts().filter((a) => a.id !== id)
+    accountStorage.saveAccounts(accounts)
+    if (accountStorage.getCurrent() === id) accountStorage.setCurrent(null)
+  },
+}
+
+export const storage = {
+  getGoals: (accountId) => {
     try {
-      return JSON.parse(localStorage.getItem(KEYS.COMPLETIONS)) || {}
+      return JSON.parse(localStorage.getItem(KEYS.GOALS(accountId))) || []
+    } catch {
+      return []
+    }
+  },
+  saveGoals: (accountId, goals) => {
+    localStorage.setItem(KEYS.GOALS(accountId), JSON.stringify(goals))
+  },
+  getCompletions: (accountId) => {
+    try {
+      return JSON.parse(localStorage.getItem(KEYS.COMPLETIONS(accountId))) || {}
     } catch {
       return {}
     }
   },
-  saveCompletions: (completions) => {
-    localStorage.setItem(KEYS.COMPLETIONS, JSON.stringify(completions))
+  saveCompletions: (accountId, completions) => {
+    localStorage.setItem(KEYS.COMPLETIONS(accountId), JSON.stringify(completions))
   },
-  getTheme: () => localStorage.getItem(KEYS.THEME) || 'light',
-  saveTheme: (theme) => localStorage.setItem(KEYS.THEME, theme),
+  getTheme: (accountId) => localStorage.getItem(KEYS.THEME(accountId)) || 'light',
+  saveTheme: (accountId, theme) => localStorage.setItem(KEYS.THEME(accountId), theme),
 }
 
 // completions shape: { "YYYY-MM-DD": { [goalId]: true/false } }

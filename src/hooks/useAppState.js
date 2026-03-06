@@ -2,26 +2,26 @@ import { useState, useCallback, useEffect } from 'react'
 import { storage, toggleGoalCompletion, getCompletionKey } from '../utils/storage'
 import { generateId } from '../utils/constants'
 
-export function useAppState() {
-  const [goals, setGoals] = useState(() => storage.getGoals())
-  const [completions, setCompletions] = useState(() => storage.getCompletions())
-  const [theme, setTheme] = useState(() => storage.getTheme())
+export function useAppState(accountId) {
+  const [goals, setGoals] = useState(() => storage.getGoals(accountId))
+  const [completions, setCompletions] = useState(() => storage.getCompletions(accountId))
+  const [theme, setTheme] = useState(() => storage.getTheme(accountId))
   const [activeTab, setActiveTab] = useState('calendar')
   const [viewMode, setViewMode] = useState('month') // 'month' | 'week'
   const [currentDate, setCurrentDate] = useState(new Date())
 
   useEffect(() => {
-    storage.saveGoals(goals)
-  }, [goals])
+    storage.saveGoals(accountId, goals)
+  }, [accountId, goals])
 
   useEffect(() => {
-    storage.saveCompletions(completions)
-  }, [completions])
+    storage.saveCompletions(accountId, completions)
+  }, [accountId, completions])
 
   useEffect(() => {
-    storage.saveTheme(theme)
+    storage.saveTheme(accountId, theme)
     document.documentElement.setAttribute('data-theme', theme)
-  }, [theme])
+  }, [accountId, theme])
 
   const addGoal = useCallback((goalData) => {
     const newGoal = {

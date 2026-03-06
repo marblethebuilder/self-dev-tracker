@@ -236,26 +236,32 @@ export default function Statistics({ goals, completions, currentDate }) {
         <span className="text-muted">{isCurrentMonth ? `${activeDays}일 기준` : '월 전체'}</span>
       </div>
 
-      <div className="feedback-banner" style={{ borderColor: feedback.color, backgroundColor: feedback.color + '15' }}>
+      <div className="feedback-banner fade-in" style={{ borderColor: feedback.color, backgroundColor: feedback.color + '15' }}>
         <span className="feedback-banner__msg" style={{ color: feedback.color }}>{feedback.message}</span>
         <span className="feedback-banner__rate" style={{ color: feedback.color }}>{overallRate}%</span>
       </div>
 
       <div className="stat-cards">
-        <StatCard label="전체 달성률" value={`${overallRate}%`} color="#667eea" />
-        <StatCard label="총 완료 횟수" value={totalCompletions} sub="회" color="#4ECDC4" />
-        <StatCard label="활성 목표" value={goals.length} sub="개" color="#FF6B6B" />
-        <StatCard
-          label="최고 달성 목표"
-          value={bestGoal ? Math.round(((monthStats[bestGoal.id]?.completed || 0) / activeDays) * 100) + '%' : '-'}
-          sub={bestGoal?.name || ''}
-          color="#96CEB4"
-        />
+        {[
+          { label: '전체 달성률', value: `${overallRate}%`, color: '#667eea' },
+          { label: '총 완료 횟수', value: totalCompletions, sub: '회', color: '#4ECDC4' },
+          { label: '활성 목표', value: goals.length, sub: '개', color: '#FF6B6B' },
+          {
+            label: '최고 달성 목표',
+            value: bestGoal ? Math.round(((monthStats[bestGoal.id]?.completed || 0) / activeDays) * 100) + '%' : '-',
+            sub: bestGoal?.name || '',
+            color: '#96CEB4',
+          },
+        ].map((card, i) => (
+          <div key={card.label} className="fade-in" style={{ '--fade-delay': `${i * 60}ms` }}>
+            <StatCard {...card} />
+          </div>
+        ))}
       </div>
 
       <div className="charts-grid">
         {goals.length > 0 && (
-          <div className="chart-card chart-card--wide">
+          <div className="chart-card chart-card--wide fade-in">
             <h3 className="chart-card__title">📈 일별 달성률 추이</h3>
             <div className="chart-container">
               <Line data={lineData} options={lineOptions} />
@@ -263,7 +269,7 @@ export default function Statistics({ goals, completions, currentDate }) {
           </div>
         )}
 
-        <div className="chart-card">
+        <div className="chart-card fade-in" style={{ '--fade-delay': '60ms' }}>
           <h3 className="chart-card__title">🎯 목표별 달성률</h3>
           <div className="chart-container">
             <Bar data={barData} options={barOptions} />
@@ -271,7 +277,7 @@ export default function Statistics({ goals, completions, currentDate }) {
         </div>
 
         {catKeys.length > 0 && (
-          <div className="chart-card">
+          <div className="chart-card fade-in" style={{ '--fade-delay': '120ms' }}>
             <h3 className="chart-card__title">🗂️ 카테고리별 완료 수</h3>
             <div className="chart-container chart-container--doughnut">
               <Doughnut data={doughnutData} options={doughnutOptions} />
@@ -280,7 +286,7 @@ export default function Statistics({ goals, completions, currentDate }) {
         )}
       </div>
 
-      <div className="goal-stat-list">
+      <div className="goal-stat-list fade-in" style={{ '--fade-delay': '80ms' }}>
         <h3>목표별 상세 통계</h3>
         {goals.map((goal) => {
           const s = monthStats[goal.id]

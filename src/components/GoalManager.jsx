@@ -165,7 +165,7 @@ export default function GoalManager({ goals, completions, addGoal, updateGoal, d
         </div>
       ) : (
         <div className="goal-list">
-          {filteredGoals.map((goal) => {
+          {filteredGoals.map((goal, index) => {
             const cat = CATEGORY_MAP[goal.category]
             const streak = calculateStreak(completions, goal.id)
             const maxStreak = calculateMaxStreak(completions, goal.id)
@@ -173,7 +173,7 @@ export default function GoalManager({ goals, completions, addGoal, updateGoal, d
             const daysSince = Math.floor((new Date() - createdDate) / (1000 * 60 * 60 * 24)) + 1
 
             return (
-              <div key={goal.id} className="goal-card" style={{ '--cat-color': cat?.color }}>
+              <div key={goal.id} className="goal-card fade-in" style={{ '--cat-color': cat?.color, '--fade-delay': `${index * 60}ms` }}>
                 <div className="goal-card__accent" />
                 <div className="goal-card__body">
                   <div className="goal-card__top">

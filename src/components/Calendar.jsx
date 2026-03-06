@@ -152,7 +152,7 @@ export default function Calendar({ goals, completions, currentDate, viewMode, to
 
   return (
     <div className="calendar-view">
-      <div className="calendar-header">
+      <div className="calendar-header fade-in">
         <div className="calendar-nav">
           <button className="icon-btn" onClick={() => navigate(-1)}>‹</button>
           <h2 className="calendar-title">{headerLabel}</h2>
@@ -190,7 +190,7 @@ export default function Calendar({ goals, completions, currentDate, viewMode, to
         <div className="week-grid">{renderWeekView()}</div>
       )}
 
-      <div className="day-detail">
+      <div className="day-detail fade-in" style={{ '--fade-delay': '100ms' }}>
         <div className="day-detail__header">
           <h3>
             {selectedDate.getMonth() + 1}월 {selectedDate.getDate()}일 ({WEEKDAYS[selectedDate.getDay()]})

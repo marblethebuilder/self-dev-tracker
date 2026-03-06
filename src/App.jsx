@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useAppState } from './hooks/useAppState'
 import Calendar from './components/Calendar'
 import GoalManager from './components/GoalManager'
@@ -7,6 +7,28 @@ import { MONTHS } from './utils/constants'
 
 export default function App() {
   const state = useAppState()
+
+  useEffect(() => {
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible')
+            io.unobserve(entry.target)
+          }
+        })
+      },
+      { threshold: 0.08, rootMargin: '0px 0px -20px 0px' }
+    )
+
+    const mo = new MutationObserver(() => {
+      document.querySelectorAll('.fade-in:not(.visible)').forEach((el) => io.observe(el))
+    })
+    mo.observe(document.body, { childList: true, subtree: true })
+    document.querySelectorAll('.fade-in:not(.visible)').forEach((el) => io.observe(el))
+
+    return () => { io.disconnect(); mo.disconnect() }
+  }, [])
 
   const tabs = [
     { id: 'calendar', label: '캘린더', icon: '📅' },

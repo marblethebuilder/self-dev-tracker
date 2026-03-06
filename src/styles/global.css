@@ -912,6 +912,20 @@ a { color: inherit; text-decoration: none; }
 .empty-state p { font-size: 0.85rem; color: var(--text-muted); }
 
 /* ==========================================
+   FADE-IN SCROLL ANIMATION
+   ========================================== */
+.fade-in {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  transition-delay: var(--fade-delay, 0ms);
+}
+.fade-in.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ==========================================
    SCROLLBAR
    ========================================== */
 ::-webkit-scrollbar { width: 6px; height: 6px; }

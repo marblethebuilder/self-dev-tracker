@@ -259,27 +259,9 @@ export default function Statistics({ goals, completions, currentDate }) {
         <span className="text-muted">{isCurrentMonth ? `${activeDays}일 기준` : '월 전체'}</span>
       </div>
 
-      <div className="overview-row fade-in">
-        <div className="feedback-banner" style={{ borderColor: feedback.color, backgroundColor: feedback.color + '15' }}>
-          <span className="feedback-banner__rate" style={{ color: feedback.color }}>{overallRate}%</span>
-          <span className="feedback-banner__msg" style={{ color: feedback.color }}>{feedback.message}</span>
-        </div>
-        <div className="stat-cards">
-          {[
-            { label: '총 완료 횟수', value: totalCompletions, sub: '회', color: '#4ECDC4' },
-            { label: '활성 목표', value: goals.length, sub: '개', color: '#FF6B6B' },
-            {
-              label: '최고 달성 목표',
-              value: bestGoal ? `${bestGoal.rate}%` : '-',
-              sub: bestGoal?.goal?.name || '',
-              color: '#96CEB4',
-            },
-          ].map((card, i) => (
-            <div key={card.label} className="fade-in" style={{ '--fade-delay': `${i * 60}ms` }}>
-              <StatCard {...card} />
-            </div>
-          ))}
-        </div>
+      <div className="feedback-banner fade-in" style={{ borderColor: feedback.color, backgroundColor: feedback.color + '15' }}>
+        <span className="feedback-banner__rate" style={{ color: feedback.color }}>{overallRate}%</span>
+        <span className="feedback-banner__msg" style={{ color: feedback.color }}>{feedback.message}</span>
       </div>
 
       <div className="goal-stat-list fade-in" style={{ '--fade-delay': '80ms' }}>

@@ -1,8 +1,15 @@
 import React, { useState } from 'react'
-import { CATEGORIES, CATEGORY_MAP } from '../utils/constants'
+import { CATEGORIES, CATEGORY_MAP, PERIODS, FREQ_OPTIONS, DURATION_OPTIONS, formatGoalSchedule } from '../utils/constants'
 import { calculateStreak, calculateMaxStreak } from '../utils/storage'
 
-const EMPTY_FORM = { name: '', category: 'exercise', description: '' }
+const EMPTY_FORM = {
+  name: '',
+  category: 'exercise',
+  description: '',
+  period: 'daily',
+  timesPerPeriod: 3,
+  duration: 30,
+}
 
 export default function GoalManager({ goals, completions, addGoal, updateGoal, deleteGoal }) {
   const [showForm, setShowForm] = useState(false)
@@ -19,7 +26,14 @@ export default function GoalManager({ goals, completions, addGoal, updateGoal, d
 
   const openEdit = (goal) => {
     setEditId(goal.id)
-    setForm({ name: goal.name, category: goal.category, description: goal.description || '' })
+    setForm({
+      name: goal.name,
+      category: goal.category,
+      description: goal.description || '',
+      period: goal.period || 'daily',
+      timesPerPeriod: goal.timesPerPeriod || 3,
+      duration: goal.duration ?? 30,
+    })
     setShowForm(true)
   }
 
@@ -32,10 +46,18 @@ export default function GoalManager({ goals, completions, addGoal, updateGoal, d
   const handleSubmit = (e) => {
     e.preventDefault()
     if (!form.name.trim()) return
+    const data = {
+      name: form.name.trim(),
+      category: form.category,
+      description: form.description.trim(),
+      period: form.period,
+      timesPerPeriod: form.period === 'weekly' ? Number(form.timesPerPeriod) : 1,
+      duration: Number(form.duration),
+    }
     if (editId) {
-      updateGoal(editId, { name: form.name.trim(), category: form.category, description: form.description.trim() })
+      updateGoal(editId, data)
     } else {
-      addGoal({ name: form.name.trim(), category: form.category, description: form.description.trim() })
+      addGoal(data)
     }
     closeForm()
   }
@@ -52,6 +74,16 @@ export default function GoalManager({ goals, completions, addGoal, updateGoal, d
 
   const filteredGoals = filterCat === 'all' ? goals : goals.filter((g) => g.category === filterCat)
   const usedCategories = [...new Set(goals.map((g) => g.category))]
+
+  // 미리보기 레이블
+  const previewLabel = (() => {
+    const schedule = formatGoalSchedule({
+      period: form.period,
+      timesPerPeriod: form.period === 'weekly' ? Number(form.timesPerPeriod) : 1,
+      duration: Number(form.duration),
+    })
+    return form.name.trim() ? `${schedule} ${form.name.trim()}` : schedule
+  })()
 
   return (
     <div className="goal-manager">
@@ -94,20 +126,79 @@ export default function GoalManager({ goals, completions, addGoal, updateGoal, d
               <button className="icon-btn" onClick={closeForm}>✕</button>
             </div>
             <form className="goal-form" onSubmit={handleSubmit}>
+
+              {/* 미리보기 */}
+              <div className="goal-preview">
+                <span className="goal-preview__label">미리보기</span>
+                <span className="goal-preview__text">{previewLabel || '–'}</span>
+              </div>
+
+              {/* 주기 선택 */}
               <div className="form-group">
-                <label className="form-label">목표 이름 *</label>
+                <label className="form-label">주기</label>
+                <div className="period-toggle">
+                  {PERIODS.map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      className={`period-toggle__btn ${form.period === p.id ? 'active' : ''}`}
+                      onClick={() => setForm((prev) => ({ ...prev, period: p.id }))}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 횟수 (주간일 때만) */}
+              {form.period === 'weekly' && (
+                <div className="form-group">
+                  <label className="form-label">주당 횟수</label>
+                  <div className="freq-picker">
+                    {FREQ_OPTIONS.map((f) => (
+                      <button
+                        key={f.id}
+                        type="button"
+                        className={`freq-picker__btn ${Number(form.timesPerPeriod) === f.id ? 'active' : ''}`}
+                        onClick={() => setForm((prev) => ({ ...prev, timesPerPeriod: f.id }))}
+                      >
+                        {f.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 소요 시간 */}
+              <div className="form-group">
+                <label className="form-label">소요 시간</label>
+                <select
+                  className="form-select"
+                  value={form.duration}
+                  onChange={(e) => setForm((prev) => ({ ...prev, duration: e.target.value }))}
+                >
+                  {DURATION_OPTIONS.map((d) => (
+                    <option key={d.id} value={d.id}>{d.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* 활동 이름 */}
+              <div className="form-group">
+                <label className="form-label">활동 이름 *</label>
                 <input
                   className="form-input"
                   type="text"
-                  placeholder="예: 매일 30분 운동"
+                  placeholder="예: 운동, 독서, 영어 공부"
                   value={form.name}
                   onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
-                  maxLength={50}
+                  maxLength={30}
                   autoFocus
                   required
                 />
               </div>
 
+              {/* 카테고리 */}
               <div className="form-group">
                 <label className="form-label">카테고리</label>
                 <div className="cat-picker">
@@ -126,6 +217,7 @@ export default function GoalManager({ goals, completions, addGoal, updateGoal, d
                 </div>
               </div>
 
+              {/* 메모 */}
               <div className="form-group">
                 <label className="form-label">메모 (선택)</label>
                 <textarea
@@ -133,7 +225,7 @@ export default function GoalManager({ goals, completions, addGoal, updateGoal, d
                   placeholder="목표에 대한 메모를 남겨보세요"
                   value={form.description}
                   onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
-                  rows={3}
+                  rows={2}
                   maxLength={200}
                 />
               </div>
@@ -171,6 +263,7 @@ export default function GoalManager({ goals, completions, addGoal, updateGoal, d
             const maxStreak = calculateMaxStreak(completions, goal.id)
             const createdDate = new Date(goal.createdAt)
             const daysSince = Math.floor((new Date() - createdDate) / (1000 * 60 * 60 * 24)) + 1
+            const schedule = goal.period ? formatGoalSchedule(goal) : null
 
             return (
               <div key={goal.id} className="goal-card fade-in" style={{ '--cat-color': cat?.color, '--fade-delay': `${index * 60}ms` }}>
@@ -184,7 +277,10 @@ export default function GoalManager({ goals, completions, addGoal, updateGoal, d
                       >
                         {cat?.emoji} {cat?.label}
                       </span>
-                      <h3 className="goal-card__name">{goal.name}</h3>
+                      <h3 className="goal-card__name">
+                        {schedule && <span className="goal-card__schedule">{schedule} </span>}
+                        {goal.name}
+                      </h3>
                       {goal.description && <p className="goal-card__desc">{goal.description}</p>}
                     </div>
                     <div className="goal-card__actions">

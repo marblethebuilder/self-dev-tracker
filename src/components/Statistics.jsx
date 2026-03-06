@@ -13,7 +13,7 @@ import {
   Filler,
 } from 'chart.js'
 import { Bar, Doughnut, Line } from 'react-chartjs-2'
-import { MONTHS, CATEGORY_MAP, getFeedback } from '../utils/constants'
+import { MONTHS, CATEGORY_MAP, getFeedback, getGoalTarget, formatGoalSchedule } from '../utils/constants'
 import { getMonthCompletions, isGoalCompletedOnDate } from '../utils/storage'
 
 ChartJS.register(
@@ -44,12 +44,20 @@ export default function Statistics({ goals, completions, currentDate }) {
     [completions, goals, year, month]
   )
 
-  const overallRate = useMemo(() => {
-    if (goals.length === 0) return 0
-    const total = goals.reduce((sum, g) => sum + (monthStats[g.id]?.completed || 0), 0)
-    const max = goals.length * activeDays
-    return max === 0 ? 0 : Math.round((total / max) * 100)
+  // 목표별 타겟 기반 달성률
+  const goalRates = useMemo(() => {
+    return goals.map((g) => {
+      const target = getGoalTarget(g, activeDays)
+      const completed = monthStats[g.id]?.completed || 0
+      const rate = target === 0 ? 0 : Math.min(100, Math.round((completed / target) * 100))
+      return { goal: g, completed, target, rate }
+    })
   }, [goals, monthStats, activeDays])
+
+  const overallRate = useMemo(() => {
+    if (goalRates.length === 0) return 0
+    return Math.round(goalRates.reduce((sum, r) => sum + r.rate, 0) / goalRates.length)
+  }, [goalRates])
 
   const totalCompletions = useMemo(
     () => goals.reduce((sum, g) => sum + (monthStats[g.id]?.completed || 0), 0),
@@ -57,14 +65,11 @@ export default function Statistics({ goals, completions, currentDate }) {
   )
 
   const bestGoal = useMemo(() => {
-    if (goals.length === 0) return null
-    return goals.reduce((best, g) => {
-      const r = monthStats[g.id]?.completed || 0
-      return r > (monthStats[best?.id]?.completed || 0) ? g : best
-    }, goals[0])
-  }, [goals, monthStats])
+    if (goalRates.length === 0) return null
+    return goalRates.reduce((best, r) => r.rate > best.rate ? r : best, goalRates[0])
+  }, [goalRates])
 
-  // Daily completion data for line chart
+  // Daily completion data for line chart (what % of goals were checked today)
   const dailyData = useMemo(() => {
     const labels = []
     const data = []
@@ -81,17 +86,13 @@ export default function Statistics({ goals, completions, currentDate }) {
     return { labels, data }
   }, [completions, goals, year, month, activeDays])
 
-  // Bar chart data
+  // Bar chart: per-goal rate using target
   const barData = {
     labels: goals.map((g) => g.name.length > 8 ? g.name.slice(0, 8) + '…' : g.name),
     datasets: [
       {
         label: '달성률 (%)',
-        data: goals.map((g) => {
-          const s = monthStats[g.id]
-          if (!s) return 0
-          return Math.round((s.completed / activeDays) * 100)
-        }),
+        data: goalRates.map((r) => r.rate),
         backgroundColor: goals.map((g) => {
           const cat = CATEGORY_MAP[g.category]
           return (cat?.color || '#4ECDC4') + 'CC'
@@ -109,13 +110,13 @@ export default function Statistics({ goals, completions, currentDate }) {
   // Doughnut chart
   const catStats = useMemo(() => {
     const map = {}
-    goals.forEach((g) => {
-      if (!map[g.category]) map[g.category] = { completed: 0, total: 0 }
-      map[g.category].completed += monthStats[g.id]?.completed || 0
-      map[g.category].total += activeDays
+    goalRates.forEach(({ goal, completed, target }) => {
+      if (!map[goal.category]) map[goal.category] = { completed: 0, target: 0 }
+      map[goal.category].completed += completed
+      map[goal.category].target += target
     })
     return map
-  }, [goals, monthStats, activeDays])
+  }, [goalRates])
 
   const catKeys = Object.keys(catStats)
   const doughnutData = {
@@ -248,8 +249,8 @@ export default function Statistics({ goals, completions, currentDate }) {
           { label: '활성 목표', value: goals.length, sub: '개', color: '#FF6B6B' },
           {
             label: '최고 달성 목표',
-            value: bestGoal ? Math.round(((monthStats[bestGoal.id]?.completed || 0) / activeDays) * 100) + '%' : '-',
-            sub: bestGoal?.name || '',
+            value: bestGoal ? `${bestGoal.rate}%` : '-',
+            sub: bestGoal?.goal?.name || '',
             color: '#96CEB4',
           },
         ].map((card, i) => (
@@ -288,17 +289,19 @@ export default function Statistics({ goals, completions, currentDate }) {
 
       <div className="goal-stat-list fade-in" style={{ '--fade-delay': '80ms' }}>
         <h3>목표별 상세 통계</h3>
-        {goals.map((goal) => {
-          const s = monthStats[goal.id]
-          const rate = s ? Math.round((s.completed / activeDays) * 100) : 0
+        {goalRates.map(({ goal, completed, target, rate }) => {
           const fb = getFeedback(rate)
           const cat = CATEGORY_MAP[goal.category]
+          const schedule = goal.period ? formatGoalSchedule(goal) : null
 
           return (
             <div key={goal.id} className="goal-stat-item">
               <div className="goal-stat-item__header">
                 <span className="goal-stat-item__emoji">{cat?.emoji}</span>
-                <span className="goal-stat-item__name">{goal.name}</span>
+                <div className="goal-stat-item__name-wrap">
+                  <span className="goal-stat-item__name">{goal.name}</span>
+                  {schedule && <span className="goal-stat-item__schedule">{schedule}</span>}
+                </div>
                 <span className="goal-stat-item__rate" style={{ color: fb.color }}>{rate}%</span>
               </div>
               <div className="goal-stat-item__bar-bg">
@@ -308,7 +311,7 @@ export default function Statistics({ goals, completions, currentDate }) {
                 />
               </div>
               <div className="goal-stat-item__meta">
-                <span>{s?.completed || 0}일 완료 / {activeDays}일</span>
+                <span>{completed}회 완료 / 목표 {target}회</span>
                 <span style={{ color: fb.color }}>{fb.message.split(' ').slice(0, 2).join(' ')}</span>
               </div>
             </div>
